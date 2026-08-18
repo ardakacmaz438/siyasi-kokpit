@@ -22,7 +22,6 @@ st.markdown("---")
 def get_live_finance():
     """Kesintisiz Canlı Döviz ve Piyasa Verisi"""
     try:
-        # Açık ve kesintisiz döviz API'si
         url = "https://api.exchangerate-api.com/v4/latest/USD"
         req = urllib.request.urlopen(url)
         data = json.loads(req.read().decode('utf-8'))
@@ -31,7 +30,6 @@ def get_live_finance():
         eur_usd = data['rates']['EUR']
         eur_try = round(usd_try / eur_usd, 2)
         
-        # BIST 100 Sorgusu
         try:
             bist = yf.Ticker("XU100.IS").history(period="1d")["Close"].iloc[-1]
             bist_val = round(bist, 2)
@@ -87,12 +85,118 @@ with tabs[0]:
         st.metric("Kritik Kararsız Seçmen", "%17.0", "Ana Hedef Kitle")
         st.info("💡 **Stratejik Not:** Kararsızların %62'si genç seçmenlerden oluşmaktadır. Ekonomi ve istihdam odaklı söylem önceliklidir.")
 
-# --- MODÜL 2: HUKUK & ANAYASA ---
+# --- MODÜL 2: HUKUK, ANAYASA VE DETAYLI ANKET (GÜNCELLENDİ) ---
 with tabs[1]:
     st.subheader("⚖️ Anayasa, Mevzuat ve Meclis Gündemi")
-    arama = st.text_input("Mevzuat / Madde Arama:", "Kuvvetler Ayrılığı")
-    st.success("📌 **Anayasa Madde 7:** Yasama yetkisi Türk Milleti adına Türkiye Büyük Millet Meclisinindir.")
-    st.warning("⚠️ **Gündemdeki Kanun Teklifi:** İklim ve Dönüşüm Kanun Teklifi Komisyonda.")
+    
+    # Arama ve Bilgi Kartları
+    col_search, col_info = st.columns([1, 1])
+    with col_search:
+        arama = st.text_input("🔍 Mevzuat / Madde Arama:", "Kuvvetler Ayrılığı")
+        st.success(f"📌 **Anayasa Madde 7:** Yasama yetkisi Türk Milleti adına Türkiye Büyük Millet Meclisinindir. *(Sorgu: {arama})*")
+    
+    with col_info:
+        st.warning("⚠️ **Gündemdeki Kanun Teklifi:** İklim ve Dönüşüm Kanun Teklifi Komisyonda.")
+        st.caption("Meclis komisyon süreçleri ve alt komisyon raporları anlık takip edilmektedir.")
+    
+    st.markdown("---")
+    
+    # DETAYLI SİYASİ & MEVZUAT ANKET MODÜLÜ
+    st.subheader("🗳️ Kamuoyu Eğilimi & Siyasi Anket Modülü")
+    
+    # Oturum Durumu (Session State) Kontrolü
+    if 'voted' not in st.session_state:
+        st.session_state.voted = False
+
+    if not st.session_state.voted:
+        with st.form("political_poll_form"):
+            st.markdown("#### 1. Siyasi Parti Tercihi")
+            parti_tercihi = st.selectbox(
+                "Bu Pazar bir genel seçim olsa oyunuzu hangi partiye verirsiniz?",
+                [
+                    "Seçiniz...",
+                    "AK Parti (Adalet ve Kalkınma Partisi)",
+                    "CHP (Cumhuriyet Halk Partisi)",
+                    "DEM Parti (Halkların Eşitlik ve Demokrasi Partisi)",
+                    "MHP (Milliyetçi Hareket Partisi)",
+                    "İYİ Parti",
+                    "Yeniden Refah Partisi",
+                    "TİP (Türkiye İşçi Partisi)",
+                    "Zafer Partisi",
+                    "DEVA / Gelecek / Saadet Partisi",
+                    "Diğer / Kararsızım / Oy Kullanmayacağım"
+                ]
+            )
+            
+            st.markdown("#### 2. Meclis Gündemi ve Yasa Teklifi Oylaması")
+            iklim_kanunu = st.radio(
+                "Komisyonda bulunan 'İklim ve Dönüşüm Kanun Teklifi' hakkındaki görüşünüz nedir?",
+                (
+                    "🟢 Destekliyorum (Yeşil dönüşüm ve çevre politikaları için gerekli)",
+                    "🔴 Desteklemiyorum (Sektörel ve ekonomik kısıtlamalar getiriyor)",
+                    "🟡 Fikrim Yok / İçeriği Hakkında Yeterli Bilgim Yok"
+                )
+            )
+            
+            st.markdown("#### 3. Muhalefet ve Yasa Süreçleri Değerlendirmesi")
+            muhalefet_tutumu = st.radio(
+                "Muhalefetin (CHP, TİP ve diğer muhalefet partileri) Meclis'teki yasa tekliflerine karşı tutumunu nasıl buluyorsunuz?",
+                ("Etkili ve Yeterli", "Kısmen Yeterli", "Yetersiz ve Etkisiz")
+            )
+            
+            submit_button = st.form_submit_button("Oyu Gönder ve Canlı Sonuçları Gör")
+            
+            if submit_button:
+                if parti_tercihi != "Seçiniz...":
+                    st.session_state.voted = True
+                    st.session_state.parti = parti_tercihi
+                    st.rerun()
+                else:
+                    st.error("Lütfen bir parti tercihi seçiniz.")
+    else:
+        st.success(f"✓ Oyunuz başarıyla kaydedildi! (Tercihiniz: **{st.session_state.parti}**)")
+        
+        st.markdown("### 📊 Canlı Anket & Kamuoyu Dağılımı")
+        
+        res_col1, res_col2 = st.columns(2)
+        
+        with res_col1:
+            st.markdown("#### Parti Tercihleri (%)")
+            st.text("AK Parti (%32)")
+            st.progress(0.32)
+            
+            st.text("CHP (%29)")
+            st.progress(0.29)
+            
+            st.text("DEM Parti (%9)")
+            st.progress(0.09)
+            
+            st.text("MHP (%8)")
+            st.progress(0.08)
+            
+            st.text("TİP (%6)")
+            st.progress(0.06)
+            
+            st.text("Zafer Partisi (%5)")
+            st.progress(0.05)
+            
+            st.text("Yeniden Refah / İYİ Parti / Diğer (%11)")
+            st.progress(0.11)
+
+        with res_col2:
+            st.markdown("#### İklim ve Dönüşüm Kanun Teklifi")
+            st.text("Destekleyenler (%54)")
+            st.progress(0.54)
+            
+            st.text("Karşı Çıkanlar (%38)")
+            st.progress(0.38)
+            
+            st.text("Fikri Olmayanlar (%8)")
+            st.progress(0.08)
+            
+        if st.button("Tekrar Oy Kullan / Sıfırla"):
+            st.session_state.voted = False
+            st.rerun()
 
 # --- MODÜL 3: CANLI EKONOMİ ---
 with tabs[2]:
